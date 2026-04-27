@@ -45,8 +45,8 @@ internal sealed partial class CustomBlockingDnsClient
 			"Query {Id}: {Domain}"
 		);
 
-	[LoggerMessage(LogLevel.Information, "{Timestamp}: Received query {RecordType} records of {Domain}")]
-	private static partial void LogQuery(ILogger logger, DateTime timestamp, string domain, DnsQueryType RecordType);
+	[LoggerMessage("{Timestamp}: Received query {RecordType} records of {Domain}")]
+	private static partial void LogQuery(ILogger logger, LogLevel level, DateTime timestamp, string domain, DnsQueryType RecordType);
 
 	[LoggerMessage(LogLevel.Information, "Blocked query for {Domain}; Returned {ResponseType})")]
 	private static partial void LogBlockedQuery(ILogger logger, string domain, BlockerResponseType responseType);
@@ -120,8 +120,9 @@ internal sealed partial class CustomBlockingDnsClient
 		var fullHost = string.Join(".", (IReadOnlyList<string>)query.Header.Host);
 		using var logScope = s_queryLogScope(_logger, query.Header.Id, fullHost);
 
-		if (_loggingOptions.CurrentValue.LoggedDomains.Contains(fullHost, StringComparer.InvariantCultureIgnoreCase)) {
-			LogQuery(_logger, DateTime.Now, fullHost, query.Header.QueryType);
+		var loggingOptions = _loggingOptions.CurrentValue;
+		if (loggingOptions.LoggedDomains.Contains(fullHost, StringComparer.InvariantCultureIgnoreCase)) {
+			LogQuery(_logger, loggingOptions.Level, DateTime.Now, fullHost, query.Header.QueryType);
 		}
 
 		for (int i = 0; i < query.Header.Host.Count; i++) {
