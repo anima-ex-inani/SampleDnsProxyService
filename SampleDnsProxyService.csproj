@@ -5,8 +5,6 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
-        <PublishAot>true</PublishAot>
-        <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
         <UserSecretsId>dotnet-SampleDnsProxyService-eddd2ca3-cfcb-4bbb-83c9-f359fb0a1950</UserSecretsId>
     </PropertyGroup>
 
@@ -21,6 +19,8 @@
     </PropertyGroup>
 
     <ItemGroup Label="Package References">
+        <PackageReference Include="Ae.Dns.Client" Version="3.1.0" />
+        <PackageReference Include="Ae.Dns.Server" Version="3.1.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.6" />
     </ItemGroup>
 </Project>

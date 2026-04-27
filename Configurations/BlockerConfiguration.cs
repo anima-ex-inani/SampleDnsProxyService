@@ -12,11 +12,19 @@
 /// <param name="LogBlockedDomains">
 /// Whether blocked domains should be logged regardless of whether they are specified to be logged.
 /// </param>
-internal record class BlockerConfiguration(
+#pragma warning disable CA1812
+internal sealed record class BlockerConfiguration(
 	[property: ConfigurationKeyName("Sinkhole Target")]
 	string SinkholeTarget,
 	[property: ConfigurationKeyName("Blocked Domains")]
 	IDictionary<string, BlockerResponseType> BlockedDomains,
 	[property: ConfigurationKeyName("Log Blocked Domains")]
 	bool LogBlockedDomains
-);
+)
+{
+	public BlockerConfiguration()
+		: this("0.0.0.0", new Dictionary<string, BlockerResponseType>(), false)
+	{
+	}
+}
+#pragma warning restore CA1812

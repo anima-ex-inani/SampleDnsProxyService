@@ -1,18 +1,15 @@
+using Ae.Dns.Protocol;
+
 namespace SampleDnsProxyService;
 
 #pragma warning disable CA1812
-internal sealed partial class DnsProxyService(ILogger<DnsProxyService> logger)
+internal sealed partial class DnsProxyService(IDnsServer server)
 	: BackgroundService
 {
-	[LoggerMessage(LogLevel.Information, "Worker running at: {Time}")]
-	private static partial void LogCurrentTime(ILogger logger, DateTimeOffset time);
-
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		while (!stoppingToken.IsCancellationRequested) {
-			LogCurrentTime(logger, DateTimeOffset.Now);
-			await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
-		}
+		await server.Listen(stoppingToken)
+			.ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
 	}
 }
 #pragma warning restore CA1812

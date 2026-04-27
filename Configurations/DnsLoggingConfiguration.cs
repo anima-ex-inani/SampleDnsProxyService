@@ -9,8 +9,16 @@
 /// <param name="LoggedDomains">
 /// The domains to log.
 /// </param>
-internal record class DnsLoggingConfiguration(
+#pragma warning disable CA1812
+internal sealed record class DnsLoggingConfiguration(
 	LogLevel Level,
 	[property: ConfigurationKeyName("Domains to Log")]
 	IList<string> LoggedDomains
-);
+)
+{
+	public DnsLoggingConfiguration()
+		: this(LogLevel.Information, new List<string>())
+	{
+	}
+}
+#pragma warning restore CA1812
