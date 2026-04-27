@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup Label="Code Properties">
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <PublishAot>true</PublishAot>
+        <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+        <UserSecretsId>dotnet-SampleDnsProxyService-eddd2ca3-cfcb-4bbb-83c9-f359fb0a1950</UserSecretsId>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Build Properties">
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Code Analysis">
+        <AnalysisLevel>latest-all</AnalysisLevel>
+        <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">true</CheckForOverflowUnderflow>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup Label="Package References">
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.6" />
+    </ItemGroup>
+</Project>
