@@ -1,7 +1,7 @@
 namespace SampleDnsProxyService;
 
 #pragma warning disable CA1812
-internal sealed partial class DnsFilteringService(ILogger<DnsFilteringService> logger)
+internal sealed partial class DnsProxyService(ILogger<DnsProxyService> logger)
 	: BackgroundService
 {
 	[LoggerMessage(LogLevel.Information, "Worker running at: {Time}")]
