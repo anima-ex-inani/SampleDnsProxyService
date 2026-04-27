@@ -17,7 +17,7 @@ internal sealed record class DnsLoggingConfiguration(
 )
 {
 	public DnsLoggingConfiguration()
-		: this(LogLevel.Information, new HashSet<string>(StringComparer.InvariantCultureIgnoreCase))
+		: this(LogLevel.Information, new HashSet<string>(StringComparer.OrdinalIgnoreCase))
 	{
 	}
 }

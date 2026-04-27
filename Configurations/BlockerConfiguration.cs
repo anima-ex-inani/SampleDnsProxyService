@@ -18,7 +18,7 @@ internal sealed record class BlockerConfiguration(
 )
 {
 	public BlockerConfiguration()
-		: this(new Dictionary<string, BlockerResponseType>(StringComparer.InvariantCultureIgnoreCase), false)
+		: this(new Dictionary<string, BlockerResponseType>(StringComparer.OrdinalIgnoreCase), false)
 	{
 	}
 }
