@@ -16,7 +16,9 @@ builder.Services.AddOptions<BlockerConfiguration>()
 
 builder.Services.AddOptions<PassthroughConfiguration>()
 	.BindConfiguration("DNS Passthrough")
-	.Validate((configuration) => configuration.Resolvers.All(resolver => IPAddress.TryParse(resolver, out _)));
+	.Validate((configuration) => {
+		return configuration.Resolvers.Count > 0 && configuration.Resolvers.All(resolver => IPAddress.TryParse(resolver, out _));
+	});
 
 builder.Services.AddOptions<DnsLoggingConfiguration>()
 	.BindConfiguration("DNS Request Logging");
