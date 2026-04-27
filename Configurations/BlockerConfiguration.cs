@@ -23,7 +23,7 @@ internal sealed record class BlockerConfiguration(
 )
 {
 	public BlockerConfiguration()
-		: this("0.0.0.0", new Dictionary<string, BlockerResponseType>(), false)
+		: this("0.0.0.0", new Dictionary<string, BlockerResponseType>(StringComparer.InvariantCultureIgnoreCase), false)
 	{
 	}
 }

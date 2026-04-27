@@ -121,7 +121,7 @@ internal sealed partial class CustomBlockingDnsClient
 		var fullHost = string.Join(".", (IReadOnlyList<string>)query.Header.Host);
 		using var logScope = s_queryLogScope(_logger, query.Header.Id, fullHost);
 
-		if (_loggingOptions.CurrentValue.LoggedDomains.Contains(fullHost)) {
+		if (_loggingOptions.CurrentValue.LoggedDomains.Contains(fullHost, StringComparer.InvariantCultureIgnoreCase)) {
 			LogQuery(_logger, DateTime.Now, fullHost, query.Header.QueryType);
 		}
 
