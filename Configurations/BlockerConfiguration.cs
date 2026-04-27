@@ -14,8 +14,6 @@
 /// </param>
 #pragma warning disable CA1812
 internal sealed record class BlockerConfiguration(
-	[property: ConfigurationKeyName("Sinkhole Target")]
-	string SinkholeTarget,
 	[property: ConfigurationKeyName("Blocked Domains")]
 	IDictionary<string, BlockerResponseType> BlockedDomains,
 	[property: ConfigurationKeyName("Log Blocked Domains")]
@@ -23,7 +21,7 @@ internal sealed record class BlockerConfiguration(
 )
 {
 	public BlockerConfiguration()
-		: this("0.0.0.0", new Dictionary<string, BlockerResponseType>(StringComparer.InvariantCultureIgnoreCase), false)
+		: this(new Dictionary<string, BlockerResponseType>(StringComparer.InvariantCultureIgnoreCase), false)
 	{
 	}
 }
