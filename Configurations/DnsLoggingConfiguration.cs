@@ -13,11 +13,11 @@
 internal sealed record class DnsLoggingConfiguration(
 	LogLevel Level,
 	[property: ConfigurationKeyName("Domains to Log")]
-	IList<string> LoggedDomains
+	ISet<string> LoggedDomains
 )
 {
 	public DnsLoggingConfiguration()
-		: this(LogLevel.Information, new List<string>())
+		: this(LogLevel.Information, new HashSet<string>(StringComparer.InvariantCultureIgnoreCase))
 	{
 	}
 }
