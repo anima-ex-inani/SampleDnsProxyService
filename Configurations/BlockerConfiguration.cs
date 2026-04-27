@@ -3,9 +3,6 @@
 /// <summary>
 /// The configuration used for the DNS blocker.
 /// </summary>
-/// <param name="SinkholeTarget">
-/// The IP address to return when a domain is sinkholed.
-/// </param>
 /// <param name="BlockedDomains">
 /// The domains that are blocked along with the response type for each domain.
 /// </param>
