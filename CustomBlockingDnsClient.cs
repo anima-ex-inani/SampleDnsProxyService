@@ -88,7 +88,7 @@ internal sealed partial class CustomBlockingDnsClient
 				BlockerResponseType.Refused => Array.Empty<DnsResourceRecord>(),
 				BlockerResponseType.Sinkhole => [
 					new DnsResourceRecord {
-						Class = DnsQueryClass.IN,
+						Class = query.Header.QueryClass,
 						Host = query.Header.Host,
 						Resource = new DnsIpAddressResource {
 							IPAddress = query.Header.QueryType switch {
