@@ -49,7 +49,7 @@ internal sealed partial class CustomBlockingDnsClient
 	private static partial void LogQuery(ILogger logger, LogLevel level, DateTime timestamp, string domain, DnsQueryType recordType);
 
 	[LoggerMessage(LogLevel.Information, "Blocked query for {Domain}; Returned {ResponseType}")]
-	private static partial void LogBlockedQuery(ILogger logger, ReadOnlySpan<char> domain, BlockerResponseType responseType);
+	private static partial void LogBlockedQuery(ILogger logger, string domain, BlockerResponseType responseType);
 
 	private static DnsMessage CreateBlockedResponse(DnsMessage query, BlockerResponseType strategy)
 	{
@@ -138,14 +138,14 @@ internal sealed partial class CustomBlockingDnsClient
 				}
 
 				if (blockerOptions.LogBlockedDomains) {
-					LogBlockedQuery(_logger, domain, strategy);
+					LogBlockedQuery(_logger, domain.ToString(), strategy);
 				}
 
 				return CreateBlockedResponse(query, strategy);
 			}
 		}
 		else {
-			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start) + 1) {
+			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start + 1)) {
 				var domain = start == 0 ? fullHost : fullHost[start..];
 
 				if (!blockerOptions.BlockedDomains.TryGetValue(domain, out var strategy)) {
