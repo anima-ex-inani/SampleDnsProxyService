@@ -40,7 +40,7 @@ internal sealed partial class CustomBlockingDnsClient
 		);
 	}
 
-	private static Func<ILogger, int, string, IDisposable?> s_queryLogScope =
+	private static readonly Func<ILogger, int, string, IDisposable?> s_queryLogScope =
 		LoggerMessage.DefineScope<int, string>(
 			"Query {Id}: {Domain}"
 		);
