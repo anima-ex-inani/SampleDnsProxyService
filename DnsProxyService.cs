@@ -9,7 +9,7 @@ internal sealed partial class DnsProxyService(IDnsServer server)
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		await server.Listen(stoppingToken)
-			.ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext);
+			.ConfigureAwait(ConfigureAwaitOptions.None);
 	}
 }
 #pragma warning restore CA1812
