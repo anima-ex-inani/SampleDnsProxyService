@@ -46,10 +46,10 @@ internal sealed partial class CustomBlockingDnsClient
 		);
 
 	[LoggerMessage("{Timestamp}: Received query {RecordType} records of {Domain}")]
-	private static partial void LogQuery(ILogger logger, LogLevel level, DateTime timestamp, string domain, DnsQueryType RecordType);
+	private static partial void LogQuery(ILogger logger, LogLevel level, DateTime timestamp, string domain, DnsQueryType recordType);
 
 	[LoggerMessage(LogLevel.Information, "Blocked query for {Domain}; Returned {ResponseType}")]
-	private static partial void LogBlockedQuery(ILogger logger, string domain, BlockerResponseType responseType);
+	private static partial void LogBlockedQuery(ILogger logger, ReadOnlySpan<char> domain, BlockerResponseType responseType);
 
 	private static DnsMessage CreateBlockedResponse(DnsMessage query, BlockerResponseType strategy)
 	{
@@ -125,21 +125,38 @@ internal sealed partial class CustomBlockingDnsClient
 			LogQuery(_logger, loggingOptions.Level, DateTime.Now, fullHost, query.Header.QueryType);
 		}
 
-		for (int i = 0; i < query.Header.Host.Count; i++) {
-			// This method makes the blocker check not just if the domain is being blocked, but also if any of its parent domains are being blocked.
-			// For example, if "www.google.com" is being queried, and "google.com" is in the blocked domains list, this method will block the query
-			// for "www.google.com" as well.
-			var domain = string.Join(".", query.Header.Host.Skip(i));
+		if (blockerOptions.BlockedDomains is Dictionary<string, BlockerResponseType> blockedDomains) {
+			var alternateBlockDomainLookup = blockedDomains.GetAlternateLookup<ReadOnlySpan<char>>();
+			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start) + 1) {
+				// This method makes the blocker check not just if the domain is being blocked, but also if any of its parent domains are being blocked.
+				// For example, if "www.google.com" is being queried, and "google.com" is in the blocked domains list, this method will block the query
+				// for "www.google.com" as well.
+				var domain = fullHost.AsSpan(start);
 
-			if (!blockerOptions.BlockedDomains.TryGetValue(domain, out var strategy)) {
-				continue;
+				if (!alternateBlockDomainLookup.TryGetValue(domain, out var strategy)) {
+					continue;
+				}
+
+				if (blockerOptions.LogBlockedDomains) {
+					LogBlockedQuery(_logger, domain, strategy);
+				}
+
+				return CreateBlockedResponse(query, strategy);
 			}
+		}
+		else {
+			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start) + 1) {
+				var domain = start == 0 ? fullHost : fullHost[start..];
 
-			if (blockerOptions.LogBlockedDomains) {
-				LogBlockedQuery(_logger, domain, strategy);
+				if (!blockerOptions.BlockedDomains.TryGetValue(domain, out var strategy)) {
+					continue;
+				}
+
+				if (blockerOptions.LogBlockedDomains) {
+					LogBlockedQuery(_logger, domain, strategy);
+				}
+				return CreateBlockedResponse(query, strategy);
 			}
-
-			return CreateBlockedResponse(query, strategy);
 		}
 
 		return await _passthroughClient.Query(query, token).ConfigureAwait(false);
