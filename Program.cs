@@ -26,7 +26,7 @@ builder.Services.AddOptions<DnsLoggingConfiguration>()
 
 builder.Services.AddOptions<DnsUdpServerOptions>()
 	.Configure((options) => {
-		options.Endpoint = new IPEndPoint(IPAddress.Any, 53);
+		options.Endpoint = new IPEndPoint(IPAddress.Loopback, 53);
 	});
 
 builder.Services.AddSingleton<IDnsClient, CustomBlockingDnsClient>();
