@@ -70,7 +70,7 @@ internal sealed partial class CustomBlockingDnsClient
 				QueryClass = query.Header.QueryClass,
 				IsQueryResponse = true,
 				OperationCode = query.Header.OperationCode,
-				AuthoritativeAnswer = true,
+				AuthoritativeAnswer = false,
 				RecursionDesired = query.Header.RecursionDesired,
 				RecursionAvailable = true,
 				ResponseCode = strategy switch {
