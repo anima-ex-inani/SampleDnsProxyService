@@ -48,7 +48,7 @@ internal sealed partial class CustomBlockingDnsClient
 	[LoggerMessage("{Timestamp}: Received query {RecordType} records of {Domain}")]
 	private static partial void LogQuery(ILogger logger, LogLevel level, DateTime timestamp, string domain, DnsQueryType RecordType);
 
-	[LoggerMessage(LogLevel.Information, "Blocked query for {Domain}; Returned {ResponseType})")]
+	[LoggerMessage(LogLevel.Information, "Blocked query for {Domain}; Returned {ResponseType}")]
 	private static partial void LogBlockedQuery(ILogger logger, string domain, BlockerResponseType responseType);
 
 	private static DnsMessage CreateBlockedResponse(DnsMessage query, BlockerResponseType strategy)
