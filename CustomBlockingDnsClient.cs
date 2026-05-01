@@ -127,11 +127,11 @@ internal sealed partial class CustomBlockingDnsClient
 
 		if (blockerOptions.BlockedDomains is Dictionary<string, BlockerResponseType> blockedDomains) {
 			var alternateBlockDomainLookup = blockedDomains.GetAlternateLookup<ReadOnlySpan<char>>();
-			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start) + 1) {
+			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start + 1)) {
 				// This method makes the blocker check not just if the domain is being blocked, but also if any of its parent domains are being blocked.
 				// For example, if "www.google.com" is being queried, and "google.com" is in the blocked domains list, this method will block the query
 				// for "www.google.com" as well.
-				var domain = fullHost.AsSpan(start);
+				var domain = fullHost.AsSpan(start + 1);
 
 				if (!alternateBlockDomainLookup.TryGetValue(domain, out var strategy)) {
 					continue;
@@ -146,7 +146,7 @@ internal sealed partial class CustomBlockingDnsClient
 		}
 		else {
 			for (int start = 0; start >= 0; start = fullHost.IndexOf('.', start + 1)) {
-				var domain = start == 0 ? fullHost : fullHost[start..];
+				var domain = start == 0 ? fullHost : fullHost[(start + 1)..];
 
 				if (!blockerOptions.BlockedDomains.TryGetValue(domain, out var strategy)) {
 					continue;
