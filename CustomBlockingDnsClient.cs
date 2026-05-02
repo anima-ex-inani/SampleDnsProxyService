@@ -109,20 +109,20 @@ internal sealed partial class CustomBlockingDnsClient
 
 	public async Task<DnsMessage> Query(DnsMessage query, CancellationToken token = default(CancellationToken))
 	{
-		var blockerOptions = _blockerOptions.CurrentValue;
-
-		// We only want to block queries for A and AAAA records. Anything else is sent to the passthrough
-		// client.
-		if (query.Header.QueryType is not (DnsQueryType.A or DnsQueryType.AAAA)) {
-			return await _passthroughClient.Query(query, token).ConfigureAwait(false);
-		}
-
 		var fullHost = string.Join(".", (IReadOnlyList<string>)query.Header.Host);
 		using var logScope = s_queryLogScope(_logger, query.Header.Id, fullHost);
 
 		var loggingOptions = _loggingOptions.CurrentValue;
 		if (loggingOptions.LoggedDomains.Contains(fullHost)) {
 			LogQuery(_logger, loggingOptions.Level, DateTime.Now, fullHost, query.Header.QueryType);
+		}
+
+		var blockerOptions = _blockerOptions.CurrentValue;
+
+		// We only want to block queries for A and AAAA records. Anything else is sent to the passthrough
+		// client.
+		if (query.Header.QueryType is not (DnsQueryType.A or DnsQueryType.AAAA)) {
+			return await _passthroughClient.Query(query, token).ConfigureAwait(false);
 		}
 
 		int start = 0;
