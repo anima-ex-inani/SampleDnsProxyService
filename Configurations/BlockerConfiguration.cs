@@ -12,7 +12,7 @@
 #pragma warning disable CA1812
 internal sealed record class BlockerConfiguration(
 	[property: ConfigurationKeyName("Blocked Domains")]
-	IDictionary<string, BlockerResponseType> BlockedDomains,
+	Dictionary<string, BlockerResponseType> BlockedDomains,
 	[property: ConfigurationKeyName("Log Blocked Domains")]
 	bool LogBlockedDomains
 )

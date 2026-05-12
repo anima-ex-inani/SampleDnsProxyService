@@ -174,42 +174,24 @@ internal sealed partial class CustomBlockingDnsClient
 		}
 
 		int start = 0;
-		if (blockerOptions.BlockedDomains is Dictionary<string, BlockerResponseType> blockedDomains) {
-			var alternateBlockDomainLookup = blockedDomains.GetAlternateLookup<ReadOnlySpan<char>>();
-			do {
-				// This method makes the blocker check not just if the domain is being blocked, but also if any of its parent domains are being blocked.
-				// For example, if "www.google.com" is being queried, and "google.com" is in the blocked domains list, this method will block the query
-				// for "www.google.com" as well.
-				var domain = fullHost.AsSpan(start);
+		var alternateBlockDomainLookup = blockerOptions.BlockedDomains.GetAlternateLookup<ReadOnlySpan<char>>();
+		do {
+			// This method makes the blocker check not just if the domain is being blocked, but also if any of its parent domains are being blocked.
+			// For example, if "www.google.com" is being queried, and "google.com" is in the blocked domains list, this method will block the query
+			// for "www.google.com" as well.
+			var domain = fullHost.AsSpan(start);
 
-				if (!alternateBlockDomainLookup.TryGetValue(domain, out var strategy)) {
-					start = fullHost.IndexOf('.', start + 1) + 1;
-					continue;
-				}
+			if (!alternateBlockDomainLookup.TryGetValue(domain, out var strategy)) {
+				start = fullHost.IndexOf('.', start + 1) + 1;
+				continue;
+			}
 
-				if (blockerOptions.LogBlockedDomains) {
-					LogBlockedQuery(_logger, domain.ToString(), strategy);
-				}
+			if (blockerOptions.LogBlockedDomains) {
+				LogBlockedQuery(_logger, domain.ToString(), strategy);
+			}
 
-				return Task.FromResult(CreateBlockedResponse(query, strategy));
-			} while (start > 0);
-		}
-		else {
-			do {
-				var domain = fullHost[start..];
-
-				if (!blockerOptions.BlockedDomains.TryGetValue(domain, out var strategy)) {
-					start = fullHost.IndexOf('.', start + 1) + 1;
-					continue;
-				}
-
-				if (blockerOptions.LogBlockedDomains) {
-					LogBlockedQuery(_logger, domain, strategy);
-				}
-				return Task.FromResult(CreateBlockedResponse(query, strategy));
-
-			} while (start > 0);
-		}
+			return Task.FromResult(CreateBlockedResponse(query, strategy));
+		} while (start > 0);
 
 		return SendToPassthrough(query, token);
 	}
