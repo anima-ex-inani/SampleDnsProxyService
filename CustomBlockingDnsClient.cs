@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Frozen;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 using Ae.Dns.Client;
@@ -20,7 +22,7 @@ internal sealed partial class CustomBlockingDnsClient
 	private readonly IOptionsMonitor<BlockerConfiguration> _blockerOptions;
 	private readonly IOptionsMonitor<DnsLoggingConfiguration> _loggingOptions;
 	private bool _disposed;
-	private readonly DnsRandomClient _passthroughClient;
+	private readonly IDnsClient[] _clients;
 
 	public CustomBlockingDnsClient(
 		ILogger<CustomBlockingDnsClient> logger,
@@ -34,10 +36,7 @@ internal sealed partial class CustomBlockingDnsClient
 		_loggingOptions = loggingOptions;
 
 		var currentPassthroughConfiguration = passthroughOptions.Value;
-		_passthroughClient = new DnsRandomClient(
-			currentPassthroughConfiguration.Resolvers
-				.Select(resolver => new DnsUdpClient(IPAddress.Parse(resolver)))
-		);
+		_clients = [.. currentPassthroughConfiguration.Resolvers.Select((resolver) => new DnsUdpClient(new IPEndPoint(IPAddress.Parse(resolver), 53)))];
 	}
 
 	private static readonly Func<ILogger, int, string, IDisposable?> s_queryLogScope =
@@ -107,7 +106,56 @@ internal sealed partial class CustomBlockingDnsClient
 		};
 	}
 
-	public async Task<DnsMessage> Query(DnsMessage query, CancellationToken token = default(CancellationToken))
+	[LoggerMessage(LogLevel.Error, "Failed to query DNS record for {Domain}")]
+	private static partial void LogFailedQuery(ILogger logger, string domain, Exception exception);
+
+	[LoggerMessage(LogLevel.Information, "Received empty response for {Domain}")]
+	private static partial void LogEmptyQuery(ILogger logger, string domain);
+
+	[SuppressMessage(
+		"Design",
+		"CA1031:Do not catch general exception types",
+		Justification = "The exception is being caught to be gathered into an AggregateException.")]
+	private async Task<DnsMessage> SendToPassthrough(DnsMessage query, CancellationToken token)
+	{
+		List<Exception> caughtExceptions = new List<Exception>(_clients.Length);
+		DnsMessage? currentResponse = null;
+
+		foreach (var client in _clients) {
+			try {
+				currentResponse = await client.Query(query, token).ConfigureAwait(ConfigureAwaitOptions.None);
+
+				// We found an response. No need to check other clients.
+				if (currentResponse.Answers.Count > 0) {
+					return currentResponse;
+				}
+
+				// The client said that the domain does not exist.
+				if (currentResponse.Header.ResponseCode is DnsResponseCode.NXDomain) {
+					return currentResponse;
+				}
+
+				LogEmptyQuery(_logger, query.Header.Host);
+			}
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (Exception ex) {
+				caughtExceptions.Add(ex);
+				LogFailedQuery(_logger, query.Header.Host, ex);
+			}
+		}
+
+		// If at least one of the clients returned an empty response, currentResponse will not be null.
+		// In that case, returning currentResponse will reflect the correct response to the initial request.
+		if (currentResponse is null) {
+			throw new AggregateException(caughtExceptions);
+		}
+
+		return currentResponse;
+	}
+
+	public Task<DnsMessage> Query(DnsMessage query, CancellationToken token = default)
 	{
 		var fullHost = string.Join(".", (IReadOnlyList<string>)query.Header.Host);
 		using var logScope = s_queryLogScope(_logger, query.Header.Id, fullHost);
@@ -122,7 +170,7 @@ internal sealed partial class CustomBlockingDnsClient
 		// We only want to block queries for A and AAAA records. Anything else is sent to the passthrough
 		// client.
 		if (query.Header.QueryType is not (DnsQueryType.A or DnsQueryType.AAAA)) {
-			return await _passthroughClient.Query(query, token).ConfigureAwait(false);
+			return SendToPassthrough(query, token);
 		}
 
 		int start = 0;
@@ -143,7 +191,7 @@ internal sealed partial class CustomBlockingDnsClient
 					LogBlockedQuery(_logger, domain.ToString(), strategy);
 				}
 
-				return CreateBlockedResponse(query, strategy);
+				return Task.FromResult(CreateBlockedResponse(query, strategy));
 			} while (start > 0);
 		}
 		else {
@@ -158,12 +206,12 @@ internal sealed partial class CustomBlockingDnsClient
 				if (blockerOptions.LogBlockedDomains) {
 					LogBlockedQuery(_logger, domain, strategy);
 				}
-				return CreateBlockedResponse(query, strategy);
+				return Task.FromResult(CreateBlockedResponse(query, strategy));
 
 			} while (start > 0);
 		}
 
-		return await _passthroughClient.Query(query, token).ConfigureAwait(false);
+		return SendToPassthrough(query, token);
 	}
 
 	public void Dispose()
@@ -172,7 +220,9 @@ internal sealed partial class CustomBlockingDnsClient
 			return;
 		}
 
-		_passthroughClient.Dispose();
+		foreach (var client in _clients) {
+			client.Dispose();
+		}
 	}
 }
 #pragma warning restore CA1812
